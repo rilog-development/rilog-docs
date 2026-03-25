@@ -227,7 +227,7 @@ function HowItWorksSection() {
           <div className="step-code">
             <div><span style={{ color: '#f0b429' }}>import</span> Rilog <span style={{ color: '#f0b429' }}>from</span> <span style={{ color: '#b8f0e8' }}>'@rilog-development/rilog-lib'</span></div>
             <div>&nbsp;</div>
-            <div>Rilog.<span style={{ color: '#3ecfbf' }}>init</span>({'{'} appKey: <span style={{ color: '#b8f0e8' }}>'YOUR_KEY'</span> {'}'})</div>
+            <div>Rilog.<span style={{ color: '#3ecfbf' }}>init</span>({'{'} key: <span style={{ color: '#b8f0e8' }}>'YOUR_KEY'</span> {'}'})</div>
           </div>
         </div>
 

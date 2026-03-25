@@ -40,6 +40,212 @@
   --docusaurus-highlighted-code-line-bg: rgba(62, 207, 191, 0.1);
 }
 
+/* ===== DARK THEME ===== */
+[data-theme='dark'] {
+  --ifm-color-primary: #3ecfbf;
+  --ifm-color-primary-dark: #2cbcac;
+  --ifm-color-primary-darker: #26b0a0;
+  --ifm-color-primary-darkest: #1e9186;
+  --ifm-color-primary-light: #54d5c6;
+  --ifm-color-primary-lighter: #62d9cb;
+  --ifm-color-primary-lightest: #84e2da;
+
+  --ifm-background-color: #0a1818;
+  --ifm-background-surface-color: #0f2222;
+  --ifm-navbar-background-color: #0a1818;
+  --ifm-navbar-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ifm-footer-background-color: #060f0f;
+  --ifm-footer-color: #6aada6;
+  --ifm-footer-link-color: #8eccc6;
+  --ifm-footer-title-color: #e0f5f2;
+  --ifm-link-color: #3ecfbf;
+  --ifm-link-hover-color: #7de3d8;
+  --ifm-toc-border-color: #1e3d3d;
+  --ifm-menu-color-background-active: #112828;
+  --docusaurus-highlighted-code-line-bg: rgba(62, 207, 191, 0.12);
+
+  --rilog-teal-dark: #3ecfbf;
+  --rilog-mint-bg: #0f2222;
+  --rilog-mint-mid: #162e2e;
+  --rilog-hero-gradient: linear-gradient(135deg, #091a1a 0%, #0d2323 40%, #0a1e1e 100%);
+}
+
+/* Navbar dark */
+[data-theme='dark'] .navbar {
+  border-bottom-color: #1a3535;
+}
+
+[data-theme='dark'] .navbar__item.navbar__link {
+  color: #a8cfc9;
+}
+
+[data-theme='dark'] .navbar__item.navbar__link:hover {
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .navbar-cta-button {
+  background: #3ecfbf !important;
+  color: #0a1818 !important;
+}
+
+[data-theme='dark'] .navbar-cta-button:hover {
+  background: #54d5c6 !important;
+  color: #0a1818 !important;
+}
+
+/* Sidebar dark */
+[data-theme='dark'] .menu__link--active {
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .menu__link:hover {
+  color: #3ecfbf;
+  background: #112828;
+}
+
+/* Admonitions dark */
+[data-theme='dark'] .alert--info,
+[data-theme='dark'] .alert--tip {
+  background: #0f2525;
+  border-left-color: #3ecfbf;
+}
+
+/* Article headings dark */
+[data-theme='dark'] article h1 {
+  color: #e0f5f2;
+}
+
+[data-theme='dark'] article h2 {
+  color: #e0f5f2;
+  border-bottom-color: #1a3535;
+}
+
+/* ===== LANDING PAGE DARK ===== */
+
+/* Hero */
+[data-theme='dark'] .hero-section {
+  background: var(--rilog-hero-gradient);
+}
+
+[data-theme='dark'] .hero-badge {
+  background: rgba(62, 207, 191, 0.12);
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .hero-title {
+  color: #e0f5f2;
+}
+
+[data-theme='dark'] .hero-title span {
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .hero-subtitle {
+  color: #8ab5b0;
+}
+
+[data-theme='dark'] .btn-secondary {
+  color: #e0f5f2;
+  border-color: rgba(62, 207, 191, 0.3);
+}
+
+[data-theme='dark'] .btn-secondary:hover {
+  background: rgba(62, 207, 191, 0.1);
+  color: #3ecfbf;
+  border-color: #3ecfbf;
+}
+
+[data-theme='dark'] .stat-number {
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .stat-label {
+  color: #6aada6;
+}
+
+[data-theme='dark'] .dashboard-preview {
+  border-color: #1a3535;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3);
+}
+
+[data-theme='dark'] .dashboard-preview-bar {
+  background: #0f2222;
+  border-bottom-color: #1a3535;
+}
+
+/* Features */
+[data-theme='dark'] .features-section {
+  background: #0a1818;
+}
+
+[data-theme='dark'] .section-tag {
+  background: #112828;
+  color: #3ecfbf;
+}
+
+[data-theme='dark'] .section-title {
+  color: #e0f5f2;
+}
+
+[data-theme='dark'] .section-desc {
+  color: #6aada6;
+}
+
+[data-theme='dark'] .feature-card {
+  background: #0f2222;
+  border-color: #1a3535;
+}
+
+[data-theme='dark'] .feature-card:hover {
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  border-color: #3ecfbf;
+}
+
+[data-theme='dark'] .feature-title {
+  color: #e0f5f2;
+}
+
+[data-theme='dark'] .feature-desc {
+  color: #6aada6;
+}
+
+/* How it works */
+[data-theme='dark'] .how-section {
+  background: #0c1e1e;
+}
+
+[data-theme='dark'] .step-card {
+  background: #0f2222;
+  border-color: #1a3535;
+}
+
+[data-theme='dark'] .step-title {
+  color: #e0f5f2;
+}
+
+[data-theme='dark'] .step-desc {
+  color: #6aada6;
+}
+
+/* Install CTA */
+[data-theme='dark'] .install-section {
+  background: #0c2020;
+}
+
+/* Events section */
+[data-theme='dark'] .events-section {
+  background: #0a1818;
+}
+
+[data-theme='dark'] .event-pill {
+  background: #0f2222;
+  border-color: #1a3535;
+}
+
+[data-theme='dark'] .event-pill-text {
+  color: #e0f5f2;
+}
+
 /* ===== NAVBAR ===== */
 .navbar {
   border-bottom: 1px solid #e8f5f2;
