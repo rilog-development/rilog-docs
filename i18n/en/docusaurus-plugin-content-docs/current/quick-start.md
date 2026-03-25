@@ -30,14 +30,14 @@ yarn add @rilog-development/rilog-lib
 
 ## Step 4 — Initialise the library
 
-Call `Rilog.init()` as early as possible in your application entry point — before any other code runs.
+Call `rilog.init()` as early as possible in your application entry point — before any other code runs.
 
 ```typescript
 // main.ts / index.ts / App.tsx
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 
-Rilog.init({
-  appKey: 'YOUR_APP_KEY_HERE',
+rilog.init({
+  key: 'YOUR_APP_KEY_HERE',
 });
 ```
 
@@ -47,33 +47,59 @@ For Vue: put it in `main.ts`, before `createApp`.
 For Next.js: use `_app.tsx` or a client component with `'use client'`.
 :::
 
-## Step 5 — Open the dashboard
+## Step 5 — Set up axios (optional)
+
+If your app uses axios, add interceptors manually — `fetch` is intercepted automatically, axios is not.
+
+```typescript
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
+});
+
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
+```
+
+Place this code immediately after `rilog.init()` in your app entry point.
+
+## Step 6 — Open the dashboard
 
 Go back to [rilog.online](https://www.rilog.online), open your application, and navigate to its **Connection**.
 
-Trigger some actions in your app (click around, make an API call, cause an error). You should see events flowing into the dashboard within seconds.
+Trigger some actions in your app (click around, make an API call). You should see events flowing into the dashboard within seconds.
 
 ---
 
 ## Minimal working example
 
 ```typescript
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 
 // Initialise once at app startup
-Rilog.init({ appKey: 'rl_live_xxxxxxxxxxxx' });
+rilog.init({ key: 'YOUR_APP_KEY' });
 
 // From this point, rilog-lib automatically captures:
-// - All fetch() and XMLHttpRequest calls
-// - Unhandled JavaScript errors
-// - Page navigation events
+// - HTTP requests (fetch and axios)
+// - Clicks on <button> and <a> elements
+// - console.error() and console.warn() calls
 
-// You can also log custom events:
-Rilog.logEvent({
-  type: 'custom',
-  message: 'User completed onboarding',
-  data: { step: 'profile-setup', userId: '123' },
-});
+// You can also log custom debug messages manually:
+rilog.logData(
+  { step: 'profile-setup', userId: '123' },
+  { label: 'onboarding' }
+);
 ```
 
 ## Next steps

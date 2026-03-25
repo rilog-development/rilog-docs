@@ -6,125 +6,105 @@ sidebar_label: Типи подій
 
 # Типи подій
 
-Rilog фіксує кілька категорій подій. Кожна подія зберігається з типом, міткою часу та специфічними для типу даними.
+Rilog перехоплює та зберігає п'ять категорій подій. Чотири з них фіксуються автоматично, одна — вручну.
 
-## HTTP Request (HTTP-запит)
+| Тип | Тригер | Автоматично |
+|---|---|---|
+| `REQUEST` | HTTP-запити через `fetch` або axios | Так |
+| `CLICK` | Кліки на елементах `<button>` та `<a>` | Так |
+| `CONSOLE_ERROR` | Виклики `console.error()` | Так |
+| `CONSOLE_WARN` | Виклики `console.warn()` | Так |
+| `DEBUG_MESSAGE` | Ручний виклик `rilog.logData()` | Ні |
 
-Фіксується автоматично для кожного виклику `fetch()` і `XMLHttpRequest` у вашому застосунку.
+---
+
+## REQUEST (HTTP-запит)
+
+Фіксується автоматично для кожного `fetch`-запиту. Для axios потрібне ручне підключення через `rilog.interceptRequestAxios()` та `rilog.interceptResponseAxios()`.
 
 | Поле | Опис |
 |---|---|
 | `method` | HTTP метод (`GET`, `POST`, `PUT`, `DELETE` тощо) |
 | `url` | Повний URL запиту |
-| `requestHeaders` | Заголовки запиту у форматі ключ-значення |
-| `requestBody` | Розібране тіло запиту (JSON, FormData, text) |
+| `requestHeaders` | Заголовки запиту (лише ті, що вказані в `config.headers`) |
+| `requestBody` | Тіло запиту |
 | `status` | HTTP код статусу відповіді |
-| `responseHeaders` | Заголовки відповіді |
-| `responseBody` | Розібране тіло відповіді |
-| `duration` | Тривалість запиту в мілісекундах |
-| `timestamp` | ISO мітка часу початку запиту |
+| `responseBody` | Тіло відповіді |
 
 ```json
 {
-  "type": "http",
+  "type": "REQUEST",
   "method": "POST",
-  "url": "https://api.myapp.com/users/login",
-  "requestHeaders": { "Content-Type": "application/json" },
+  "url": "https://api.myapp.com/users",
   "requestBody": { "email": "user@example.com" },
-  "status": 200,
-  "responseBody": { "userId": "usr_123", "token": "[REDACTED]" },
-  "duration": 142
+  "status": 201,
+  "responseBody": { "id": "usr_123" }
 }
 ```
 
-## JavaScript Error (JavaScript помилка)
+---
 
-Фіксується автоматично для всіх необроблених помилок і необроблених promise rejection.
+## CLICK (Клік)
 
-| Поле | Опис |
-|---|---|
-| `message` | Рядок повідомлення помилки |
-| `stackTrace` | Повний stack trace |
-| `filename` | Вихідний файл, де виникла помилка |
-| `line` | Номер рядка |
-| `column` | Номер колонки |
-| `type` | Назва конструктора помилки (`TypeError`, `RangeError` тощо) |
+Фіксується автоматично при кліку на будь-який елемент `<button>` або `<a>`.
 
 ```json
 {
-  "type": "error",
-  "level": "error",
-  "message": "Cannot read properties of undefined (reading 'map')",
-  "stackTrace": "at ProductList (ProductList.tsx:42:18)\n  at render...",
-  "filename": "http://localhost:3000/src/components/ProductList.tsx",
-  "line": 42,
-  "column": 18
+  "type": "CLICK",
+  "target": "button",
+  "text": "Submit"
 }
 ```
 
-## Page View (Перегляд сторінки)
+Вимкнути: `config.disableClickInterceptor: true`
 
-Фіксується автоматично, коли ваш SPA переходить до нового маршруту.
+---
 
-| Поле | Опис |
-|---|---|
-| `url` | Новий URL після навігації |
-| `previousUrl` | URL до навігації |
-| `title` | Заголовок документа в момент навігації |
-| `referrer` | URL реферера (для першого завантаження) |
+## CONSOLE_ERROR
+
+Фіксується при кожному виклику `console.error()`. Оригінальний вивід у DevTools **зберігається**.
 
 ```json
 {
-  "type": "pageview",
-  "url": "/products/shoes",
-  "previousUrl": "/products",
-  "title": "Shoes — MyShop"
+  "type": "CONSOLE_ERROR",
+  "args": ["Something went wrong", { "code": 500 }]
 }
 ```
 
-## Custom Event (Кастомна подія)
+---
 
-Надсилається вручну через `Rilog.logEvent()`. Повністю гнучка — ви самі визначаєте структуру.
+## CONSOLE_WARN
 
-| Поле | Опис |
-|---|---|
-| `type` | Завжди `'custom'` (або ваш власний рядок) |
-| `message` | Опис зрозумілою мовою |
-| `level` | `'info'`, `'warn'` або `'error'` |
-| `data` | Ваші довільні дані |
+Фіксується при кожному виклику `console.warn()`. Оригінальний вивід у DevTools **зберігається**.
 
 ```json
 {
-  "type": "custom",
-  "level": "info",
-  "message": "User completed onboarding",
-  "data": {
-    "step": "profile-setup",
-    "userId": "usr_456",
-    "duration_seconds": 47
-  }
+  "type": "CONSOLE_WARN",
+  "args": ["Deprecated API used"]
 }
 ```
 
-## Console Log (опціонально)
+Вимкнути обидва console-перехоплювачі: `config.disableConsoleInterceptor: true`
 
-Коли увімкнено, фіксує виклики `console.warn` і `console.error` з їхніми аргументами.
+---
 
-| Поле | Опис |
-|---|---|
-| `level` | `'warn'` або `'error'` |
-| `args` | Масив серіалізованих аргументів, переданих до console |
+## DEBUG_MESSAGE (кастомна подія)
 
-## Метадані події
+Надсилається вручну через `rilog.logData()`. Використовується для логування довільних даних у потрібних місцях коду. Автоматично захоплює stack trace з місця виклику (потрібні source maps для читабельних посилань).
 
-Кожна подія — незалежно від типу — також містить ці загальні поля:
+```typescript
+rilog.logData({ userId: 'usr_456', step: 'checkout' }, { label: 'purchase-flow' });
+```
 
-| Поле | Опис |
-|---|---|
-| `id` | Унікальний ідентифікатор події (UUID) |
-| `connectionKey` | App Key, що надіслав подію |
-| `timestamp` | ISO 8601 мітка часу |
-| `environment` | Мітка середовища (якщо налаштовано) |
-| `userAgent` | Рядок user agent браузера |
-| `user` | Поточний контекст користувача (якщо встановлено через `Rilog.setUser()`) |
-| `sessionId` | Анонімний ідентифікатор сесії (скидається при перезавантаженні сторінки) |
+| Параметр | Тип | Обов'язково | Опис |
+|---|---|---|---|
+| `data` | `any` | Так | Будь-яке значення; об'єкти серіалізуються автоматично |
+| `label` | `string` | Так | Мітка для фільтрації подій у дашборді |
+
+```json
+{
+  "type": "DEBUG_MESSAGE",
+  "label": "purchase-flow",
+  "data": { "userId": "usr_456", "step": "checkout" }
+}
+```

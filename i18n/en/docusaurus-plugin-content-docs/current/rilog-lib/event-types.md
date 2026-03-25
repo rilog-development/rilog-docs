@@ -6,125 +6,105 @@ sidebar_label: Event Types
 
 # Event Types
 
-Rilog captures several categories of events. Each event is stored with its type, timestamp, and a type-specific payload.
+Rilog intercepts and stores five categories of events. Four are captured automatically, one is sent manually.
 
-## HTTP Request
+| Type | Trigger | Automatic |
+|---|---|---|
+| `REQUEST` | HTTP requests via `fetch` or axios | Yes |
+| `CLICK` | Clicks on `<button>` and `<a>` elements | Yes |
+| `CONSOLE_ERROR` | `console.error()` calls | Yes |
+| `CONSOLE_WARN` | `console.warn()` calls | Yes |
+| `DEBUG_MESSAGE` | Manual call via `rilog.logData()` | No |
 
-Captured automatically for every `fetch()` and `XMLHttpRequest` call made by your app.
+---
+
+## REQUEST (HTTP request)
+
+Captured automatically for every `fetch` request. For axios, manual wiring is required via `rilog.interceptRequestAxios()` and `rilog.interceptResponseAxios()`.
 
 | Field | Description |
 |---|---|
 | `method` | HTTP method (`GET`, `POST`, `PUT`, `DELETE`, etc.) |
 | `url` | Full request URL |
-| `requestHeaders` | Request headers as key-value pairs |
-| `requestBody` | Parsed request body (JSON, FormData, text) |
+| `requestHeaders` | Request headers (only those listed in `config.headers`) |
+| `requestBody` | Request body |
 | `status` | HTTP response status code |
-| `responseHeaders` | Response headers |
-| `responseBody` | Parsed response body |
-| `duration` | Request duration in milliseconds |
-| `timestamp` | ISO timestamp when the request was initiated |
+| `responseBody` | Response body |
 
 ```json
 {
-  "type": "http",
+  "type": "REQUEST",
   "method": "POST",
-  "url": "https://api.myapp.com/users/login",
-  "requestHeaders": { "Content-Type": "application/json" },
+  "url": "https://api.myapp.com/users",
   "requestBody": { "email": "user@example.com" },
-  "status": 200,
-  "responseBody": { "userId": "usr_123", "token": "[REDACTED]" },
-  "duration": 142
+  "status": 201,
+  "responseBody": { "id": "usr_123" }
 }
 ```
 
-## JavaScript Error
+---
 
-Captured automatically for all unhandled errors and unhandled promise rejections.
+## CLICK
 
-| Field | Description |
-|---|---|
-| `message` | Error message string |
-| `stackTrace` | Full stack trace |
-| `filename` | Source file where the error occurred |
-| `line` | Line number |
-| `column` | Column number |
-| `type` | Error constructor name (`TypeError`, `RangeError`, etc.) |
+Captured automatically on every click on a `<button>` or `<a>` element.
 
 ```json
 {
-  "type": "error",
-  "level": "error",
-  "message": "Cannot read properties of undefined (reading 'map')",
-  "stackTrace": "at ProductList (ProductList.tsx:42:18)\n  at render...",
-  "filename": "http://localhost:3000/src/components/ProductList.tsx",
-  "line": 42,
-  "column": 18
+  "type": "CLICK",
+  "target": "button",
+  "text": "Submit"
 }
 ```
 
-## Page View
+To disable: `config.disableClickInterceptor: true`
 
-Captured automatically when your SPA navigates to a new route.
+---
 
-| Field | Description |
-|---|---|
-| `url` | New URL after navigation |
-| `previousUrl` | URL before navigation |
-| `title` | Document title at time of navigation |
-| `referrer` | Referring URL (for first load) |
+## CONSOLE_ERROR
+
+Captured on every `console.error()` call. Original output in DevTools **is preserved**.
 
 ```json
 {
-  "type": "pageview",
-  "url": "/products/shoes",
-  "previousUrl": "/products",
-  "title": "Shoes — MyShop"
+  "type": "CONSOLE_ERROR",
+  "args": ["Something went wrong", { "code": 500 }]
 }
 ```
 
-## Custom Event
+---
 
-Sent manually via `Rilog.logEvent()`. Fully flexible — you define the shape.
+## CONSOLE_WARN
 
-| Field | Description |
-|---|---|
-| `type` | Always `'custom'` (or your own string) |
-| `message` | Human-readable description |
-| `level` | `'info'`, `'warn'`, or `'error'` |
-| `data` | Your arbitrary payload |
+Captured on every `console.warn()` call. Original output in DevTools **is preserved**.
 
 ```json
 {
-  "type": "custom",
-  "level": "info",
-  "message": "User completed onboarding",
-  "data": {
-    "step": "profile-setup",
-    "userId": "usr_456",
-    "duration_seconds": 47
-  }
+  "type": "CONSOLE_WARN",
+  "args": ["Deprecated API used"]
 }
 ```
 
-## Console Log (optional)
+To disable both console interceptors: `config.disableConsoleInterceptor: true`
 
-When enabled, captures `console.warn` and `console.error` calls with their arguments.
+---
 
-| Field | Description |
-|---|---|
-| `level` | `'warn'` or `'error'` |
-| `args` | Array of serialised arguments passed to console |
+## DEBUG_MESSAGE (custom event)
 
-## Event metadata
+Sent manually via `rilog.logData()`. Used to log arbitrary data at specific points in your code. Automatically captures a stack trace from the call site (source maps improve readability).
 
-Every event — regardless of type — also includes these common fields:
+```typescript
+rilog.logData({ userId: 'usr_456', step: 'checkout' }, { label: 'purchase-flow' });
+```
 
-| Field | Description |
-|---|---|
-| `id` | Unique event ID (UUID) |
-| `connectionKey` | App Key that sent the event |
-| `timestamp` | ISO 8601 timestamp |
-| `environment` | Environment label (if configured) |
-| `userAgent` | Browser user agent string |
-| `user` | Current user context (if set via `Rilog.setUser()`) |
-| `sessionId` | Anonymous session identifier (resets on page reload) |
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `data` | `any` | Yes | Any value; objects are serialised automatically |
+| `label` | `string` | Yes | Label for filtering events in the dashboard |
+
+```json
+{
+  "type": "DEBUG_MESSAGE",
+  "label": "purchase-flow",
+  "data": { "userId": "usr_456", "step": "checkout" }
+}
+```

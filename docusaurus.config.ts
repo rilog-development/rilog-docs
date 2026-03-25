@@ -19,7 +19,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://rilog.online',
+  url: 'https://docs.rilog.online',
   baseUrl: '/',
 
   organizationName: 'rilog',
@@ -97,7 +97,6 @@ const config: Config = {
             { label: 'Вступ', to: '/docs/intro' },
             { label: 'Швидкий старт', to: '/docs/quick-start' },
             { label: 'rilog-lib', to: '/docs/rilog-lib/overview' },
-            { label: 'Rilog App', to: '/docs/app/overview' },
           ],
         },
         {

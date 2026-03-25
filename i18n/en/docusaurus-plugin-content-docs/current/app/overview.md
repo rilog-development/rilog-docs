@@ -31,11 +31,3 @@ Account
 ```
 
 Use the left sidebar to navigate between sections. The top breadcrumb shows your current position.
-
-## Quick links
-
-- [Creating an application](/docs/app/creating-application)
-- [Understanding connections](/docs/app/connections)
-- [Event viewer](/docs/app/event-viewer)
-- [Analytics](/docs/app/analytics)
-- [Sharing events](/docs/app/sharing)

@@ -6,133 +6,195 @@ sidebar_label: Конфігурація
 
 # Конфігурація
 
-`Rilog.init()` приймає об'єкт конфігурації. Єдине обов'язкове поле — `appKey`.
+`rilog.init()` приймає об'єкт з двома полями: обов'язковим `key` та опціональним `config`.
+
+```typescript
+rilog.init({
+  key: 'your-app-key',
+  config: { ... }, // опціонально
+});
+```
 
 ## Повна довідка конфігурації
 
 ```typescript
-Rilog.init({
+rilog.init({
   // Обов'язково
-  appKey: 'rl_live_xxxxxxxxxxxx',
+  key: 'your-app-key',
 
-  // Опціонально — що фіксувати
-  captureHttp: true,         // логувати всі HTTP-запити (за замовчуванням: true)
-  captureErrors: true,       // логувати необроблені JS помилки (за замовчуванням: true)
-  capturePageViews: true,    // логувати зміни маршрутів/сторінок (за замовчуванням: true)
+  // Опціонально
+  config: {
+    // Фільтрація запитів
+    ignoredRequests: ['https://analytics.example.com', '/api/ping'],
 
-  // Опціонально — фільтрація запитів
-  ignoreUrls: [
-    'https://analytics.example.com',
-    /\/health/,              // regex також підтримується
-  ],
+    // Приховування чутливих даних
+    sensetiveRequsts: ['/api/login'],          // замінює заголовки І тіло на 'sensitive'
+    sensetiveDataRequests: ['/api/payments'],  // замінює лише тіло на 'sensitive'
 
-  // Опціонально — видалення чутливих даних з тіл запитів
-  sanitizeBody: true,        // за замовчуванням: false
+    // Заголовки та localStorage
+    headers: ['x-request-id', 'x-trace-id'],  // які заголовки зберігати
+    localStorage: ['theme', 'locale'],         // які ключі localStorage зберігати
 
-  // Опціонально — мітка середовища (відображається в дашборді)
-  environment: 'production', // 'development' | 'staging' | 'production'
+    // Вимкнення перехоплювачів
+    disableFetchInterceptor: false,     // вимкнути fetch-перехоплення
+    disableClickInterceptor: false,     // вимкнути перехоплення кліків
+    disableConsoleInterceptor: false,   // вимкнути перехоплення console.warn/error
 
-  // Опціонально — вимкнути у розробці
-  enabled: process.env.NODE_ENV === 'production',
+    // Власний сервер
+    selfServer: {
+      url: 'https://your-backend.com/rilog',
+      headers: { Authorization: 'Bearer token' },
+    },
 
-  // Опціонально — контекст користувача, що додається до всіх подій
-  user: {
-    id: 'usr_123',
-    email: 'user@example.com',
+    // Хуки
+    onPushEvent: (event) => { console.log('New event:', event); },
+    onSaveEvents: (events) => { console.log('Saving events:', events); },
   },
 });
 ```
 
 ## Параметри конфігурації
 
-### `appKey` (обов'язково)
+### `key` (обов'язково)
 
 Тип: `string`
 
-Ваш унікальний ключ застосунку з дашборду Rilog. Ідентифікує, до якого застосунку належать події.
+Ключ застосунку, який отримується при створенні проєкту в дашборді Rilog. Прив'язує події до конкретного проєкту.
 
-### `captureHttp`
+---
 
-Тип: `boolean` | За замовчуванням: `true`
+### `ignoredRequests`
 
-Коли `true`, rilog-lib обгортає глобальні `fetch` і `XMLHttpRequest`, щоб логувати кожен HTTP-запит і відповідь, включаючи код статусу, заголовки, час і тіло.
+Тип: `string[]` | За замовчуванням: `[]`
 
-### `captureErrors`
-
-Тип: `boolean` | За замовчуванням: `true`
-
-Коли `true`, підключається до `window.onerror` і `window.onunhandledrejection`, щоб фіксувати JavaScript помилки зі stack traces.
-
-### `capturePageViews`
-
-Тип: `boolean` | За замовчуванням: `true`
-
-Коли `true`, слухає History API (`pushState`, `replaceState`) і `popstate`, щоб логувати події навігації в single-page застосунках.
-
-### `ignoreUrls`
-
-Тип: `(string | RegExp)[]` | За замовчуванням: `[]`
-
-Список рядків URL або регулярних виразів. HTTP-запити, URL яких збігається з будь-яким записом у цьому списку, не будуть логуватися. Корисно для фільтрації шуму від аналітичних beacon, health check або сторонніх сервісів.
+Список URL-рядків. HTTP-запити до цих URL не будуть збережені.
 
 ```typescript
-ignoreUrls: [
-  'https://www.google-analytics.com',
-  /\/api\/ping/,
-  'intercom.io',
-]
+ignoredRequests: ['https://www.google-analytics.com', '/api/health']
 ```
 
-### `sanitizeBody`
+---
+
+### `sensetiveRequsts`
+
+Тип: `string[]` | За замовчуванням: `[]`
+
+Запити, у яких **заголовки та тіло** повністю замінюються рядком `'sensitive'`. Використовуйте для endpoint'ів з обліковими даними (наприклад, `/api/login`).
+
+---
+
+### `sensetiveDataRequests`
+
+Тип: `string[]` | За замовчуванням: `[]`
+
+Запити, у яких замінюється лише **тіло** на `'sensitive'` (заголовки зберігаються). Підходить для endpoint'ів з платіжними даними або PII.
+
+---
+
+### `headers`
+
+Тип: `string[]` | За замовчуванням: `[]`
+
+Allowlist заголовків запиту, які будуть збережені. За замовчуванням жодні заголовки не зберігаються.
+
+```typescript
+headers: ['x-request-id', 'x-correlation-id']
+```
+
+---
+
+### `localStorage`
+
+Тип: `string[]` | За замовчуванням: `[]`
+
+Allowlist ключів `localStorage`, значення яких додаються до подій. За замовчуванням нічого не зберігається.
+
+```typescript
+localStorage: ['user_id', 'locale']
+```
+
+---
+
+### `disableFetchInterceptor`
 
 Тип: `boolean` | За замовчуванням: `false`
 
-Коли `true`, rilog-lib замінює поширені чутливі імена полів (`password`, `token`, `secret`, `authorization`, `credit_card`, `cvv`) у тілах запитів і відповідей перед відправкою до Rilog. Увімкніть для будь-якого endpoint, який може містити облікові дані.
+Вимикає автоматичне перехоплення `fetch`-запитів. Axios перехоплюється окремо — вручну через `rilog.interceptRequestAxios()` і `rilog.interceptResponseAxios()`.
 
-### `environment`
+---
 
-Тип: `string` | За замовчуванням: `undefined`
+### `disableClickInterceptor`
 
-Рядкова мітка, що додається до кожної події (наприклад, `'production'`, `'staging'`). Відображається в дашборді, корисна для фільтрації подій за середовищем, коли кілька з'єднань спільно використовують застосунок.
+Тип: `boolean` | За замовчуванням: `false`
 
-### `enabled`
+Вимикає перехоплення кліків на елементах `<button>` та `<a>`.
 
-Тип: `boolean` | За замовчуванням: `true`
+---
 
-Коли `false`, бібліотека нічого не робить — ні фіксації подій, ні мережевих запитів. Використовуйте для вимкнення логування у розробці без видалення виклику `init`.
+### `disableConsoleInterceptor`
+
+Тип: `boolean` | За замовчуванням: `false`
+
+Вимикає перехоплення викликів `console.error()` і `console.warn()`. Оригінальний вивід у DevTools зберігається.
+
+---
+
+### `selfServer`
+
+Тип: `{ url: string; headers?: Record<string, string> }` | За замовчуванням: `undefined`
+
+Надсилає події на власний бекенд замість (або разом із) сховищем Rilog. Ваш endpoint отримує `POST`-запит з тілом `{ events: string }`, де значення — JSON-масив об'єктів подій.
 
 ```typescript
-Rilog.init({
-  appKey: 'YOUR_KEY',
-  enabled: process.env.NODE_ENV !== 'development',
+selfServer: {
+  url: 'https://your-backend.com/rilog-events',
+  headers: { 'X-Api-Key': 'secret' },
+}
+```
+
+---
+
+### `onPushEvent`
+
+Тип: `(event: RilogEvent) => void` | За замовчуванням: `undefined`
+
+Callback, що викликається щоразу, коли перехоплюється нова подія. Корисно для дебагу або кастомної обробки.
+
+---
+
+### `onSaveEvents`
+
+Тип: `(events: RilogEvent[]) => void` | За замовчуванням: `undefined`
+
+Callback, що викликається перед відправкою батчу подій у сховище.
+
+---
+
+## Підключення axios
+
+`fetch`-запити перехоплюються автоматично. Axios потребує ручного підключення через interceptors. Додайте цей код одразу після `rilog.init()`:
+
+```typescript
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
 });
+
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
 ```
 
-### `user`
-
-Тип: `{ id?: string; email?: string; name?: string; [key: string]: unknown }` | За замовчуванням: `undefined`
-
-Опціональний контекст користувача, що додається до кожної події. Корисно для зіставлення подій з конкретними користувачами. Ви можете оновити це в будь-який час після init (наприклад, після входу користувача).
-
-```typescript
-// Після входу користувача
-Rilog.setUser({ id: 'usr_456', email: 'alice@example.com' });
-```
-
-## Оновлення конфігурації після init
-
-Деякі властивості можна оновлювати під час виконання:
-
-```typescript
-// Оновити контекст користувача (наприклад, після входу)
-Rilog.setUser({ id: 'usr_789', email: 'bob@example.com' });
-
-// Очистити контекст користувача (наприклад, після виходу)
-Rilog.clearUser();
-
-// Тимчасово вимкнути логування
-Rilog.disable();
-
-// Увімкнути знову
-Rilog.enable();
-```
+:::tip
+Якщо у вас кілька axios-інстансів, додайте interceptors до кожного з них окремо.
+:::

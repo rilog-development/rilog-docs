@@ -20,19 +20,6 @@ const sidebars: SidebarsConfig = {
         'rilog-lib/event-types',
       ],
     },
-    {
-      type: 'category',
-      label: '🖥️ Rilog App',
-      collapsed: false,
-      items: [
-        'app/overview',
-        'app/creating-application',
-        'app/connections',
-        'app/event-viewer',
-        'app/analytics',
-        'app/sharing',
-      ],
-    },
   ],
 };
 

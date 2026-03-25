@@ -8,26 +8,23 @@ sidebar_label: Installation
 
 ## Requirements
 
-- Node.js 14 or later (for the build toolchain)
 - A browser-based JavaScript application (React, Vue, Angular, Next.js, plain JS, etc.)
-- A Rilog account and a valid App Key
+- A Rilog account and a valid App Key (obtained by creating a project at [rilog.online](http://www.rilog.online))
 
-## Install via npm
+## Install the package
 
 ```bash
 npm install @rilog-development/rilog-lib
-```
-
-## Install via yarn
-
-```bash
+# or
 yarn add @rilog-development/rilog-lib
 ```
 
-## Install via pnpm
+## Basic initialisation
 
-```bash
-pnpm add @rilog-development/rilog-lib
+```javascript
+import rilog from '@rilog-development/rilog-lib';
+
+rilog.init({ key: 'your-app-key' });
 ```
 
 ## Framework-specific setup
@@ -40,10 +37,10 @@ Put the initialisation call in your entry file, before `ReactDOM.createRoot`:
 // src/main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 import App from './App';
 
-Rilog.init({ appKey: 'YOUR_APP_KEY' });
+rilog.init({ key: 'YOUR_APP_KEY' });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -54,18 +51,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 ### Next.js (App Router)
 
-Create a client component that initialises Rilog and render it in your root layout:
+Create a client component that initialises rilog and render it in your root layout:
 
 ```tsx
 // components/RilogProvider.tsx
 'use client';
 
 import { useEffect } from 'react';
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 
 export default function RilogProvider() {
   useEffect(() => {
-    Rilog.init({ appKey: process.env.NEXT_PUBLIC_RILOG_KEY! });
+    rilog.init({ key: process.env.NEXT_PUBLIC_RILOG_KEY! });
   }, []);
 
   return null;
@@ -93,10 +90,10 @@ export default function RootLayout({ children }) {
 ```ts
 // src/main.ts
 import { createApp } from 'vue';
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 import App from './App.vue';
 
-Rilog.init({ appKey: 'YOUR_APP_KEY' });
+rilog.init({ key: 'YOUR_APP_KEY' });
 
 createApp(App).mount('#app');
 ```
@@ -106,40 +103,29 @@ createApp(App).mount('#app');
 ```ts
 // src/main.ts
 import { bootstrapApplication } from '@angular/platform-browser';
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
-Rilog.init({ appKey: 'YOUR_APP_KEY' });
+rilog.init({ key: 'YOUR_APP_KEY' });
 
 bootstrapApplication(AppComponent, appConfig);
 ```
 
-### Plain HTML
-
-```html
-<script type="module">
-  import Rilog from 'https://cdn.jsdelivr.net/npm/@rilog-development/rilog-lib/dist/index.js';
-  Rilog.init({ appKey: 'YOUR_APP_KEY' });
-</script>
-```
-
 ## Environment variables
 
-Keep your App Key out of source code by using an environment variable:
+Keep your App Key out of source code by using environment variables:
 
 ```bash
 # .env
-VITE_RILOG_KEY=rl_live_xxxxxxxxxxxx
-NEXT_PUBLIC_RILOG_KEY=rl_live_xxxxxxxxxxxx
+VITE_RILOG_KEY=your-app-key
+NEXT_PUBLIC_RILOG_KEY=your-app-key
 ```
 
 ```ts
-Rilog.init({ appKey: import.meta.env.VITE_RILOG_KEY });
-// or for Next.js:
-Rilog.init({ appKey: process.env.NEXT_PUBLIC_RILOG_KEY! });
-```
+// Vite
+rilog.init({ key: import.meta.env.VITE_RILOG_KEY });
 
-:::caution
-App Keys are client-side credentials — they identify your app but don't grant write access to data. Still, it's good practice to use environment variables and keep them out of public repositories.
-:::
+// Next.js
+rilog.init({ key: process.env.NEXT_PUBLIC_RILOG_KEY! });
+```

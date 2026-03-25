@@ -14,9 +14,9 @@ sidebar_label: Швидкий старт
 
 ## Крок 2 — Створіть застосунок
 
-Після входу натисніть **Create Application** (або кнопку **+**) в Application Center. Дайте йому назву (наприклад, `my-frontend-app`).
+Після входу натисніть **Створити додаток** (або кнопку **+**) в розділі Додатки. Дайте йому назву (наприклад, `my-frontend-app`) та опис.
 
-Ви отримаєте унікальний **App Key** — скопіюйте його, він знадобиться на наступному кроці.
+Ви отримаєте унікальний **Ключ додатку** — скопіюйте його, він знадобиться на наступному кроці.
 
 ## Крок 3 — Встановіть rilog-lib
 
@@ -30,14 +30,14 @@ yarn add @rilog-development/rilog-lib
 
 ## Крок 4 — Ініціалізуйте бібліотеку
 
-Викличте `Rilog.init()` якомога раніше у точці входу вашого застосунку — до будь-якого іншого коду.
+Викличте `rilog.init()` якомога раніше у точці входу вашого застосунку — до будь-якого іншого коду.
 
 ```typescript
 // main.ts / index.ts / App.tsx
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from "@rilog-development/rilog-lib";
 
-Rilog.init({
-  appKey: 'YOUR_APP_KEY_HERE',
+rilog.init({
+  key: "YOUR_APP_KEY_HERE",
 });
 ```
 
@@ -47,33 +47,59 @@ Rilog.init({
 Для Next.js: використовуйте `_app.tsx` або client-компонент з `'use client'`.
 :::
 
-## Крок 5 — Відкрийте дашборд
+## Крок 5 — Підключіть axios (опціонально)
 
-Поверніться на [rilog.online](https://www.rilog.online), відкрийте свій застосунок і перейдіть до його **Connection**.
+Якщо ваш застосунок використовує axios, додайте interceptors вручну — `fetch` перехоплюється автоматично, axios ні.
+
+```typescript
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
+});
+
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
+```
+
+Розмістіть цей код одразу після `rilog.init()` у точці входу застосунку.
+
+## Крок 6 — Відкрийте дашборд
 
 Виконайте кілька дій у своєму застосунку (покликайте, зробіть API-запит, спровокуйте помилку). Ви побачите, як події з'являються в дашборді протягом секунд.
+
+Поверніться на [rilog.online](https://www.rilog.online), відкрийте свій застосунок і ви побачите список зʼєднань. Відкрийте зʼєднання і подивіться сформований список подій.
 
 ---
 
 ## Мінімальний робочий приклад
 
 ```typescript
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from "@rilog-development/rilog-lib";
 
 // Ініціалізація один раз при старті застосунку
-Rilog.init({ appKey: 'rl_live_xxxxxxxxxxxx' });
+rilog.init({ key: "YOUR_APP_KEY" });
 
 // З цього моменту rilog-lib автоматично фіксує:
-// - Всі виклики fetch() і XMLHttpRequest
-// - Необроблені JavaScript помилки
-// - Події навігації між сторінками
+// - HTTP-запити (fetch і axios)
+// - Кліки на <button> і <a>
+// - Виклики console.error() і console.warn()
 
-// Ви також можете логувати кастомні події:
-Rilog.logEvent({
-  type: 'custom',
-  message: 'User completed onboarding',
-  data: { step: 'profile-setup', userId: '123' },
-});
+// Ви також можете логувати кастомні повідомлення вручну:
+rilog.logData(
+  { step: "profile-setup", userId: "123" },
+  { label: "onboarding" }
+);
 ```
 
 ## Наступні кроки

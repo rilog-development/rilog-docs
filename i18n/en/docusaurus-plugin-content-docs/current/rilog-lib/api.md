@@ -9,146 +9,105 @@ sidebar_label: API Reference
 All methods are available on the default export from `@rilog-development/rilog-lib`.
 
 ```typescript
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 ```
 
 ---
 
-## `Rilog.init(config)`
+## `rilog.init({ key, config? })`
 
-Initialises the library. Must be called once, as early as possible in your application lifecycle.
+Initialises the library and starts all automatic interceptors. Must be called once, as early as possible in your application lifecycle.
 
 **Parameters**
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `config` | `RilogConfig` | ✅ | Configuration object (see [Configuration](/docs/rilog-lib/configuration)) |
+| `key` | `string` | ✅ | App Key from the Rilog dashboard |
+| `config` | `TRilogInitConfig` | ❌ | Additional settings (see [Configuration](/docs/rilog-lib/configuration)) |
 
 **Returns:** `void`
 
 ```typescript
-Rilog.init({
-  appKey: 'rl_live_xxxxxxxxxxxx',
-  environment: 'production',
-  captureHttp: true,
-  captureErrors: true,
-});
-```
-
----
-
-## `Rilog.logEvent(event)`
-
-Manually send a custom event to Rilog. Use this for business-logic events that aren't captured automatically (e.g. user completed onboarding, feature flag resolved, payment initiated).
-
-**Parameters**
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `event.type` | `string` | ✅ | Event type identifier (e.g. `'custom'`, `'business'`) |
-| `event.message` | `string` | ✅ | Human-readable description of the event |
-| `event.data` | `Record<string, unknown>` | ❌ | Arbitrary payload attached to the event |
-| `event.level` | `'info' \| 'warn' \| 'error'` | ❌ | Severity level (default: `'info'`) |
-
-**Returns:** `void`
-
-```typescript
-// Log a business event
-Rilog.logEvent({
-  type: 'custom',
-  message: 'User completed checkout',
-  data: {
-    orderId: 'ord_9xk2f',
-    total: 149.99,
-    currency: 'USD',
-    itemCount: 3,
+rilog.init({
+  key: 'YOUR_APP_KEY',
+  config: {
+    ignoredRequests: ['/api/health'],
+    disableClickInterceptor: false,
   },
 });
-
-// Log a warning
-Rilog.logEvent({
-  type: 'custom',
-  level: 'warn',
-  message: 'Feature flag not found, using default',
-  data: { flag: 'new-checkout-flow' },
-});
 ```
 
 ---
 
-## `Rilog.setUser(user)`
+## `rilog.interceptRequestAxios(request)`
 
-Attach user context to all subsequent events. Call this after your user authenticates.
+Called inside an axios request interceptor. Pass the axios request config object.
 
 **Parameters**
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `user.id` | `string` | ❌ | Unique user identifier |
-| `user.email` | `string` | ❌ | User email |
-| `user.name` | `string` | ❌ | Display name |
-| Additional fields | `unknown` | ❌ | Any extra key-value pairs |
+| `request` | `InternalAxiosRequestConfig` | ✅ | Axios request config object |
 
 **Returns:** `void`
 
 ```typescript
-// After login
-Rilog.setUser({
-  id: 'usr_123',
-  email: 'alice@example.com',
-  name: 'Alice',
-  plan: 'pro',
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
 });
 ```
 
 ---
 
-## `Rilog.clearUser()`
+## `rilog.interceptResponseAxios(response)`
 
-Remove the current user context. Call this on logout.
+Called in both the success and error handlers of an axios response interceptor.
+
+**Parameters**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `response` | `AxiosResponse \| AxiosError` | ✅ | Axios response or error object |
 
 **Returns:** `void`
 
 ```typescript
-// On logout
-Rilog.clearUser();
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
 ```
 
 ---
 
-## `Rilog.enable()`
+## `rilog.logData(data, { label })`
 
-Re-enable event capture after it was disabled. No-op if already enabled.
+Manually log a custom debug message. Automatically captures a stack trace from the call site (source maps improve readability).
 
-**Returns:** `void`
+**Parameters**
 
----
-
-## `Rilog.disable()`
-
-Temporarily stop capturing events. Events that occur while disabled are not queued — they are dropped.
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `data` | `any` | ✅ | Any value; objects are serialised automatically |
+| `label` | `string` | ✅ | Label for filtering events in the dashboard |
 
 **Returns:** `void`
 
 ```typescript
-// Disable during a sensitive operation
-Rilog.disable();
-await sensitiveOperation();
-Rilog.enable();
-```
-
----
-
-## `Rilog.flush()`
-
-Force-send any buffered events immediately. By default events are batched and sent periodically; call `flush()` if you need to guarantee delivery before a page unload.
-
-**Returns:** `Promise<void>`
-
-```typescript
-window.addEventListener('beforeunload', () => {
-  Rilog.flush();
-});
+rilog.logData(
+  { userId: 'usr_456', step: 'checkout', total: 149.99 },
+  { label: 'purchase-flow' }
+);
 ```
 
 ---
@@ -156,29 +115,22 @@ window.addEventListener('beforeunload', () => {
 ## TypeScript types
 
 ```typescript
-interface RilogConfig {
-  appKey: string;
-  captureHttp?: boolean;
-  captureErrors?: boolean;
-  capturePageViews?: boolean;
-  ignoreUrls?: (string | RegExp)[];
-  sanitizeBody?: boolean;
-  environment?: string;
-  enabled?: boolean;
-  user?: RilogUser;
+interface TRilogInitConfig {
+  ignoredRequests?: string[];
+  sensetiveRequsts?: string[];
+  sensetiveDataRequests?: string[];
+  headers?: string[];
+  localStorage?: string[];
+  disableFetchInterceptor?: boolean;
+  disableClickInterceptor?: boolean;
+  disableConsoleInterceptor?: boolean;
+  selfServer?: ISelfServer;
+  onPushEvent?: (event: unknown) => void;
+  onSaveEvents?: (events: unknown[]) => void;
 }
 
-interface RilogUser {
-  id?: string;
-  email?: string;
-  name?: string;
-  [key: string]: unknown;
-}
-
-interface RilogCustomEvent {
-  type: string;
-  message: string;
-  level?: 'info' | 'warn' | 'error';
-  data?: Record<string, unknown>;
+interface ISelfServer {
+  url: string;
+  headers?: Record<string, string>;
 }
 ```

@@ -6,133 +6,195 @@ sidebar_label: Configuration
 
 # Configuration
 
-`Rilog.init()` accepts a configuration object. The only required field is `appKey`.
+`rilog.init()` accepts an object with two fields: the required `key` and an optional `config`.
+
+```typescript
+rilog.init({
+  key: 'your-app-key',
+  config: { ... }, // optional
+});
+```
 
 ## Full configuration reference
 
 ```typescript
-Rilog.init({
+rilog.init({
   // Required
-  appKey: 'rl_live_xxxxxxxxxxxx',
+  key: 'your-app-key',
 
-  // Optional — control what gets captured
-  captureHttp: true,         // log all HTTP requests (default: true)
-  captureErrors: true,       // log unhandled JS errors (default: true)
-  capturePageViews: true,    // log route/page changes (default: true)
+  // Optional
+  config: {
+    // Request filtering
+    ignoredRequests: ['https://analytics.example.com', '/api/ping'],
 
-  // Optional — filter requests
-  ignoreUrls: [
-    'https://analytics.example.com',
-    /\/health/,              // regex also supported
-  ],
+    // Hiding sensitive data
+    sensetiveRequsts: ['/api/login'],          // replaces headers AND body with 'sensitive'
+    sensetiveDataRequests: ['/api/payments'],  // replaces body only with 'sensitive'
 
-  // Optional — strip sensitive data from request bodies
-  sanitizeBody: true,        // default: false
+    // Headers and localStorage
+    headers: ['x-request-id', 'x-trace-id'],  // which headers to store
+    localStorage: ['theme', 'locale'],         // which localStorage keys to store
 
-  // Optional — environment tag (shown in dashboard)
-  environment: 'production', // 'development' | 'staging' | 'production'
+    // Disable interceptors
+    disableFetchInterceptor: false,     // disable fetch interception
+    disableClickInterceptor: false,     // disable click interception
+    disableConsoleInterceptor: false,   // disable console.warn/error interception
 
-  // Optional — disable in development
-  enabled: process.env.NODE_ENV === 'production',
+    // Self-hosted server
+    selfServer: {
+      url: 'https://your-backend.com/rilog',
+      headers: { Authorization: 'Bearer token' },
+    },
 
-  // Optional — custom user context attached to all events
-  user: {
-    id: 'usr_123',
-    email: 'user@example.com',
+    // Hooks
+    onPushEvent: (event) => { console.log('New event:', event); },
+    onSaveEvents: (events) => { console.log('Saving events:', events); },
   },
 });
 ```
 
 ## Configuration options
 
-### `appKey` (required)
+### `key` (required)
 
 Type: `string`
 
-Your unique application key from the Rilog dashboard. This identifies which application events belong to.
+The App Key obtained when creating a project in the Rilog dashboard. Links events to a specific project.
 
-### `captureHttp`
+---
 
-Type: `boolean` | Default: `true`
+### `ignoredRequests`
 
-When `true`, rilog-lib wraps the global `fetch` and `XMLHttpRequest` to log every HTTP request and response, including status code, headers, timing, and body.
+Type: `string[]` | Default: `[]`
 
-### `captureErrors`
-
-Type: `boolean` | Default: `true`
-
-When `true`, hooks into `window.onerror` and `window.onunhandledrejection` to capture JavaScript errors with their stack traces.
-
-### `capturePageViews`
-
-Type: `boolean` | Default: `true`
-
-When `true`, listens to the History API (`pushState`, `replaceState`) and `popstate` to log navigation events in single-page applications.
-
-### `ignoreUrls`
-
-Type: `(string | RegExp)[]` | Default: `[]`
-
-A list of URL strings or regular expressions. HTTP requests whose URL matches any entry in this list will not be logged. Useful for filtering out noise from analytics beacons, health checks, or third-party services you don't care about.
+A list of URL strings. HTTP requests to these URLs will not be stored.
 
 ```typescript
-ignoreUrls: [
-  'https://www.google-analytics.com',
-  /\/api\/ping/,
-  'intercom.io',
-]
+ignoredRequests: ['https://www.google-analytics.com', '/api/health']
 ```
 
-### `sanitizeBody`
+---
+
+### `sensetiveRequsts`
+
+Type: `string[]` | Default: `[]`
+
+Requests where both **headers and body** are fully replaced with the string `'sensitive'`. Use for endpoints with credentials (e.g. `/api/login`).
+
+---
+
+### `sensetiveDataRequests`
+
+Type: `string[]` | Default: `[]`
+
+Requests where only the **body** is replaced with `'sensitive'` (headers are kept). Suitable for endpoints with payment data or PII.
+
+---
+
+### `headers`
+
+Type: `string[]` | Default: `[]`
+
+An allowlist of request headers to store. By default no headers are stored.
+
+```typescript
+headers: ['x-request-id', 'x-correlation-id']
+```
+
+---
+
+### `localStorage`
+
+Type: `string[]` | Default: `[]`
+
+An allowlist of `localStorage` keys whose values are attached to events. By default nothing is stored.
+
+```typescript
+localStorage: ['user_id', 'locale']
+```
+
+---
+
+### `disableFetchInterceptor`
 
 Type: `boolean` | Default: `false`
 
-When `true`, rilog-lib redacts common sensitive field names (`password`, `token`, `secret`, `authorization`, `credit_card`, `cvv`) from request and response bodies before sending them to Rilog. Enable this for any endpoint that might carry credentials.
+Disables automatic `fetch` request interception. Axios is intercepted separately — manually via `rilog.interceptRequestAxios()` and `rilog.interceptResponseAxios()`.
 
-### `environment`
+---
 
-Type: `string` | Default: `undefined`
+### `disableClickInterceptor`
 
-A string label attached to every event (e.g. `'production'`, `'staging'`). Visible in the dashboard, useful for filtering events by environment when multiple connections share an app.
+Type: `boolean` | Default: `false`
 
-### `enabled`
+Disables interception of clicks on `<button>` and `<a>` elements.
 
-Type: `boolean` | Default: `true`
+---
 
-When `false`, the library does nothing — no event capture, no network calls. Use this to disable logging in development without removing the `init` call.
+### `disableConsoleInterceptor`
+
+Type: `boolean` | Default: `false`
+
+Disables interception of `console.error()` and `console.warn()` calls. Original output in DevTools is preserved.
+
+---
+
+### `selfServer`
+
+Type: `{ url: string; headers?: Record<string, string> }` | Default: `undefined`
+
+Sends events to your own backend instead of (or alongside) Rilog storage. Your endpoint receives a `POST` request with the body `{ events: string }`, where the value is a JSON array of event objects.
 
 ```typescript
-Rilog.init({
-  appKey: 'YOUR_KEY',
-  enabled: process.env.NODE_ENV !== 'development',
+selfServer: {
+  url: 'https://your-backend.com/rilog-events',
+  headers: { 'X-Api-Key': 'secret' },
+}
+```
+
+---
+
+### `onPushEvent`
+
+Type: `(event: RilogEvent) => void` | Default: `undefined`
+
+Callback fired each time a new event is intercepted. Useful for debugging or custom processing.
+
+---
+
+### `onSaveEvents`
+
+Type: `(events: RilogEvent[]) => void` | Default: `undefined`
+
+Callback fired before a batch of events is sent to storage.
+
+---
+
+## Axios setup
+
+`fetch` requests are intercepted automatically. Axios requires manual wiring via interceptors. Add this code immediately after `rilog.init()`:
+
+```typescript
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
 });
+
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
 ```
 
-### `user`
-
-Type: `{ id?: string; email?: string; name?: string; [key: string]: unknown }` | Default: `undefined`
-
-Optional user context attached to every event. Useful for correlating events with specific users. You can update this at any time after init (e.g. after the user logs in).
-
-```typescript
-// After user logs in
-Rilog.setUser({ id: 'usr_456', email: 'alice@example.com' });
-```
-
-## Updating config after init
-
-Some properties can be updated at runtime:
-
-```typescript
-// Update user context (e.g. after login)
-Rilog.setUser({ id: 'usr_789', email: 'bob@example.com' });
-
-// Clear user context (e.g. after logout)
-Rilog.clearUser();
-
-// Temporarily disable logging
-Rilog.disable();
-
-// Re-enable
-Rilog.enable();
-```
+:::tip
+If you have multiple axios instances, add interceptors to each one separately.
+:::

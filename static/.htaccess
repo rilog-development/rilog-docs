@@ -1,13 +1,6 @@
 Options -Indexes
 
-# Force HTTPS
 RewriteEngine On
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-# Redirect www.docs to docs (на случай если добавится)
-RewriteCond %{HTTP_HOST} ^www\.docs\.rilog\.online$ [NC]
-RewriteRule ^ https://docs.rilog.online%{REQUEST_URI} [R=301,L]
 
 # Serve 404 page for missing files/dirs (Docusaurus is static - no SPA fallback needed)
 RewriteCond %{REQUEST_FILENAME} !-f

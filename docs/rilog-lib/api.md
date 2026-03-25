@@ -9,146 +9,105 @@ sidebar_label: Довідка API
 Всі методи доступні через default export з `@rilog-development/rilog-lib`.
 
 ```typescript
-import Rilog from '@rilog-development/rilog-lib';
+import rilog from '@rilog-development/rilog-lib';
 ```
 
 ---
 
-## `Rilog.init(config)`
+## `rilog.init({ key, config? })`
 
-Ініціалізує бібліотеку. Повинен викликатися один раз, якомога раніше в lifecycle застосунку.
+Ініціалізує бібліотеку і запускає всі автоматичні перехоплювачі. Повинен викликатися один раз, якомога раніше в lifecycle застосунку.
 
 **Параметри**
 
 | Параметр | Тип | Обов'язковий | Опис |
 |---|---|---|---|
-| `config` | `RilogConfig` | ✅ | Об'єкт конфігурації (дивіться [Конфігурація](/docs/rilog-lib/configuration)) |
+| `key` | `string` | ✅ | Ключ застосунку з дашборду Rilog |
+| `config` | `TRilogInitConfig` | ❌ | Додаткові налаштування (дивіться [Конфігурація](/docs/rilog-lib/configuration)) |
 
 **Повертає:** `void`
 
 ```typescript
-Rilog.init({
-  appKey: 'rl_live_xxxxxxxxxxxx',
-  environment: 'production',
-  captureHttp: true,
-  captureErrors: true,
-});
-```
-
----
-
-## `Rilog.logEvent(event)`
-
-Вручну надіслати кастомну подію до Rilog. Використовуйте для бізнес-логічних подій, які не фіксуються автоматично (наприклад, користувач завершив онбординг, feature flag визначено, платіж ініційовано).
-
-**Параметри**
-
-| Параметр | Тип | Обов'язковий | Опис |
-|---|---|---|---|
-| `event.type` | `string` | ✅ | Ідентифікатор типу події (наприклад, `'custom'`, `'business'`) |
-| `event.message` | `string` | ✅ | Опис події зрозумілою мовою |
-| `event.data` | `Record<string, unknown>` | ❌ | Довільні дані, прикріплені до події |
-| `event.level` | `'info' \| 'warn' \| 'error'` | ❌ | Рівень важливості (за замовчуванням: `'info'`) |
-
-**Повертає:** `void`
-
-```typescript
-// Логувати бізнес-подію
-Rilog.logEvent({
-  type: 'custom',
-  message: 'User completed checkout',
-  data: {
-    orderId: 'ord_9xk2f',
-    total: 149.99,
-    currency: 'USD',
-    itemCount: 3,
+rilog.init({
+  key: 'YOUR_APP_KEY',
+  config: {
+    ignoredRequests: ['/api/health'],
+    disableClickInterceptor: false,
   },
 });
-
-// Логувати попередження
-Rilog.logEvent({
-  type: 'custom',
-  level: 'warn',
-  message: 'Feature flag not found, using default',
-  data: { flag: 'new-checkout-flow' },
-});
 ```
 
 ---
 
-## `Rilog.setUser(user)`
+## `rilog.interceptRequestAxios(request)`
 
-Прикріпити контекст користувача до всіх наступних подій. Викликайте після автентифікації користувача.
+Викликається всередині axios request interceptor. Передайте об'єкт конфігурації запиту axios.
 
 **Параметри**
 
 | Параметр | Тип | Обов'язковий | Опис |
 |---|---|---|---|
-| `user.id` | `string` | ❌ | Унікальний ідентифікатор користувача |
-| `user.email` | `string` | ❌ | Email користувача |
-| `user.name` | `string` | ❌ | Ім'я для відображення |
-| Додаткові поля | `unknown` | ❌ | Будь-які додаткові пари ключ-значення |
+| `request` | `InternalAxiosRequestConfig` | ✅ | Об'єкт конфігурації axios-запиту |
 
 **Повертає:** `void`
 
 ```typescript
-// Після входу
-Rilog.setUser({
-  id: 'usr_123',
-  email: 'alice@example.com',
-  name: 'Alice',
-  plan: 'pro',
+import axios from 'axios';
+import rilog from '@rilog-development/rilog-lib';
+
+axios.interceptors.request.use((request) => {
+  rilog.interceptRequestAxios(request);
+  return request;
 });
 ```
 
 ---
 
-## `Rilog.clearUser()`
+## `rilog.interceptResponseAxios(response)`
 
-Видалити поточний контекст користувача. Викликайте при виході.
+Викликається в обох обробниках axios response interceptor — для успішних відповідей і для помилок.
+
+**Параметри**
+
+| Параметр | Тип | Обов'язковий | Опис |
+|---|---|---|---|
+| `response` | `AxiosResponse \| AxiosError` | ✅ | Об'єкт відповіді або помилки axios |
 
 **Повертає:** `void`
 
 ```typescript
-// При виході
-Rilog.clearUser();
+axios.interceptors.response.use(
+  (response) => {
+    rilog.interceptResponseAxios(response);
+    return response;
+  },
+  (error) => {
+    rilog.interceptResponseAxios(error);
+    return Promise.reject(error);
+  }
+);
 ```
 
 ---
 
-## `Rilog.enable()`
+## `rilog.logData(data, { label })`
 
-Повторно увімкнути фіксацію подій після вимкнення. Нічого не робить, якщо вже увімкнено.
+Вручну записати кастомне debug-повідомлення. Автоматично захоплює stack trace з місця виклику (для читабельних посилань потрібні source maps).
 
-**Повертає:** `void`
+**Параметри**
 
----
-
-## `Rilog.disable()`
-
-Тимчасово зупинити фіксацію подій. Події, що виникають під час вимкнення, не ставляться в чергу — вони відкидаються.
+| Параметр | Тип | Обов'язковий | Опис |
+|---|---|---|---|
+| `data` | `any` | ✅ | Будь-яке значення; об'єкти серіалізуються автоматично |
+| `label` | `string` | ✅ | Мітка для фільтрації подій у дашборді |
 
 **Повертає:** `void`
 
 ```typescript
-// Вимкнути під час чутливої операції
-Rilog.disable();
-await sensitiveOperation();
-Rilog.enable();
-```
-
----
-
-## `Rilog.flush()`
-
-Примусово надіслати всі буферизовані події негайно. За замовчуванням події пакуються й надсилаються періодично; викликайте `flush()`, якщо потрібно гарантувати доставку перед вивантаженням сторінки.
-
-**Повертає:** `Promise<void>`
-
-```typescript
-window.addEventListener('beforeunload', () => {
-  Rilog.flush();
-});
+rilog.logData(
+  { userId: 'usr_456', step: 'checkout', total: 149.99 },
+  { label: 'purchase-flow' }
+);
 ```
 
 ---
@@ -156,29 +115,22 @@ window.addEventListener('beforeunload', () => {
 ## TypeScript типи
 
 ```typescript
-interface RilogConfig {
-  appKey: string;
-  captureHttp?: boolean;
-  captureErrors?: boolean;
-  capturePageViews?: boolean;
-  ignoreUrls?: (string | RegExp)[];
-  sanitizeBody?: boolean;
-  environment?: string;
-  enabled?: boolean;
-  user?: RilogUser;
+interface TRilogInitConfig {
+  ignoredRequests?: string[];
+  sensetiveRequsts?: string[];
+  sensetiveDataRequests?: string[];
+  headers?: string[];
+  localStorage?: string[];
+  disableFetchInterceptor?: boolean;
+  disableClickInterceptor?: boolean;
+  disableConsoleInterceptor?: boolean;
+  selfServer?: ISelfServer;
+  onPushEvent?: (event: unknown) => void;
+  onSaveEvents?: (events: unknown[]) => void;
 }
 
-interface RilogUser {
-  id?: string;
-  email?: string;
-  name?: string;
-  [key: string]: unknown;
-}
-
-interface RilogCustomEvent {
-  type: string;
-  message: string;
-  level?: 'info' | 'warn' | 'error';
-  data?: Record<string, unknown>;
+interface ISelfServer {
+  url: string;
+  headers?: Record<string, string>;
 }
 ```
