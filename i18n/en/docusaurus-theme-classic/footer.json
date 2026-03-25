@@ -1,0 +1,42 @@
+{
+  "link.title.Документація": {
+    "message": "Documentation",
+    "description": "Footer column title"
+  },
+  "link.title.Ресурси": {
+    "message": "Resources",
+    "description": "Footer column title"
+  },
+  "link.title.Підтримка": {
+    "message": "Support",
+    "description": "Footer column title"
+  },
+  "link.item.label.Вступ": {
+    "message": "Introduction",
+    "description": "Footer link"
+  },
+  "link.item.label.Швидкий старт": {
+    "message": "Quick Start",
+    "description": "Footer link"
+  },
+  "link.item.label.rilog-lib": {
+    "message": "rilog-lib",
+    "description": "Footer link"
+  },
+  "link.item.label.Rilog App": {
+    "message": "Rilog App",
+    "description": "Footer link"
+  },
+  "link.item.label.NPM Package": {
+    "message": "NPM Package",
+    "description": "Footer link"
+  },
+  "link.item.label.Відкрити Rilog App": {
+    "message": "Open Rilog App",
+    "description": "Footer link"
+  },
+  "link.item.label.Зворотний зв'язок": {
+    "message": "Feedback",
+    "description": "Footer link"
+  }
+}

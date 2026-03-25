@@ -1,0 +1,14 @@
+{
+  "sidebar.docsSidebar.category.🚀 Початок роботи": {
+    "message": "🚀 Getting Started",
+    "description": "Sidebar category label"
+  },
+  "sidebar.docsSidebar.category.📦 rilog-lib": {
+    "message": "📦 rilog-lib",
+    "description": "Sidebar category label"
+  },
+  "sidebar.docsSidebar.category.🖥️ Rilog App": {
+    "message": "🖥️ Rilog App",
+    "description": "Sidebar category label"
+  }
+}

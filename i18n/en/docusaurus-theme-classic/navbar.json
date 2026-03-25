@@ -1,0 +1,22 @@
+{
+  "item.label.Документація": {
+    "message": "Documentation",
+    "description": "Navbar item label"
+  },
+  "item.label.Швидкий старт": {
+    "message": "Quick Start",
+    "description": "Navbar item label"
+  },
+  "item.label.rilog-lib": {
+    "message": "rilog-lib",
+    "description": "Navbar item label"
+  },
+  "item.label.NPM": {
+    "message": "NPM",
+    "description": "Navbar item label"
+  },
+  "item.label.Відкрити додаток": {
+    "message": "Open App",
+    "description": "Navbar CTA button"
+  }
+}
